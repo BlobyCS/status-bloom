@@ -2,53 +2,18 @@ export const config = { runtime: "edge" };
 
 const MONITOR_ID = "802022031";
 const API_URL = "https://api.uptimerobot.com/v2/getMonitors";
-
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "content-type",
   "Access-Control-Allow-Methods": "GET,OPTIONS",
 };
 
-type MonitorStatus = "up" | "degraded" | "down";
+export default async function handler(req: Request) {
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS_HEADERS });
 
-interface UptimeRobotMonitor {
-  id: number;
-  friendly_name: string;
-  url: string;
-  status: number;
-  response_times?: { value: number }[];
-  custom_uptime_ratio?: string;
-  all_time_uptime_ratio: string;
-}
+  const apiKey = process.env.UPTIMEROBOT_API_KEY;
+  if (!apiKey) return new Response(JSON.stringify({ error: "API key missing" }), { status: 500, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } });
 
-interface UptimeRobotResponse {
-  stat: "ok" | "fail";
-  monitors?: UptimeRobotMonitor[];
-  error?: { message: string };
-}
-
-interface MonitorResult {
-  id: string;
-  name: string;
-  url: string;
-  status: MonitorStatus;
-  latency: number | null;
-  uptime30d: number | null;
-  uptime90d: number | null;
-  allTimeUptime: number | null;
-  lastCheck: string;
-}
-
-function parseRatios(ratio?: string): [number | null, number | null] {
-  if (!ratio) return [null, null];
-  const [r30, r90] = ratio.split("-").map(Number);
-  return [
-    Number.isFinite(r30) ? r30 : null,
-    Number.isFinite(r90) ? r90 : null,
-  ];
-}
-
-async function fetchMonitor(apiKey: string): Promise<UptimeRobotMonitor> {
   const body = new URLSearchParams({
     api_key: apiKey,
     monitors: MONITOR_ID,
@@ -59,68 +24,26 @@ async function fetchMonitor(apiKey: string): Promise<UptimeRobotMonitor> {
     custom_uptime_ratios: "30-90",
   });
 
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-  });
+  const res = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body });
 
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) return new Response(JSON.stringify({ error: `UptimeRobot HTTP ${res.status}` }), { status: 502, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } });
 
-  const data = (await res.json()) as UptimeRobotResponse;
+  const data = await res.json();
+  const monitor = data?.monitors?.[0];
+  if (!monitor) return new Response(JSON.stringify({ error: "Monitor not found" }), { status: 404, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } });
 
-  if (data.stat !== "ok" || !data.monitors?.length) {
-    throw new Error(data.error?.message || "Monitor not found");
-  }
+  const [uptime30d, uptime90d] = monitor.custom_uptime_ratio?.split("-").map(Number) ?? [null, null];
+  const status = monitor.status === 2 ? "up" : monitor.status === 8 ? "degraded" : "down";
 
-  return data.monitors[0];
-}
-
-export default async function handler(req: Request): Promise<Response> {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: CORS_HEADERS });
-  }
-
-  try {
-    const apiKey = process.env.UPTIMEROBOT_API_KEY;
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: "API key missing" }), {
-        status: 500,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      });
-    }
-
-    const monitor = await fetchMonitor(apiKey);
-    const [uptime30d, uptime90d] = parseRatios(monitor.custom_uptime_ratio);
-
-    const STATUS_MAP: Record<number, MonitorStatus> = {
-      2: "up",
-      8: "degraded",
-      9: "down",
-      0: "down",
-      1: "down",
-    };
-
-    const result: MonitorResult = {
-      id: monitor.id.toString(),
-      name: monitor.friendly_name || "bloby.eu",
-      url: monitor.url,
-      status: STATUS_MAP[monitor.status] ?? "down",
-      latency: monitor.response_times?.[0]?.value ?? null,
-      uptime30d,
-      uptime90d,
-      allTimeUptime: Number(monitor.all_time_uptime_ratio) || null,
-      lastCheck: new Date().toISOString(),
-    };
-
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-    });
-  } catch (e) {
-    return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
-    );
-  }
+  return new Response(JSON.stringify({
+    id: monitor.id,
+    name: monitor.friendly_name || "bloby.eu",
+    url: monitor.url,
+    status,
+    latency: monitor.response_times?.[0]?.value ?? null,
+    uptime30d,
+    uptime90d,
+    allTimeUptime: monitor.all_time_uptime_ratio ? Number(monitor.all_time_uptime_ratio) : null,
+    lastCheck: new Date().toISOString(),
+  }), { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } });
 }
