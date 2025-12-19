@@ -1,10 +1,11 @@
 import { Incident } from '@/types/status';
-import { AlertTriangle, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, XCircle, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, formatDuration, intervalToDuration } from 'date-fns';
 
 interface IncidentItemProps {
   incident: Incident;
+  index: number;
 }
 
 const severityConfig = {
@@ -12,85 +13,141 @@ const severityConfig = {
     icon: AlertTriangle,
     color: 'text-status-degraded',
     bg: 'bg-status-degraded-bg',
+    label: 'Minor',
   },
   major: {
     icon: AlertTriangle,
-    color: 'text-status-degraded',
-    bg: 'bg-status-degraded-bg',
+    color: 'text-amber-600 dark:text-amber-400',
+    bg: 'bg-amber-50 dark:bg-amber-950/30',
+    label: 'Major',
   },
   critical: {
     icon: XCircle,
     color: 'text-status-down',
     bg: 'bg-status-down-bg',
+    label: 'Critical',
   },
 };
 
-function IncidentItem({ incident }: IncidentItemProps) {
+function IncidentItem({ incident, index }: IncidentItemProps) {
   const config = severityConfig[incident.severity];
   const Icon = incident.status === 'resolved' ? CheckCircle2 : config.icon;
+  const isResolved = incident.status === 'resolved';
+
+  // Calculate incident duration
+  const duration = incident.resolvedAt
+    ? intervalToDuration({
+        start: new Date(incident.startedAt),
+        end: new Date(incident.resolvedAt),
+      })
+    : null;
+
+  const durationText = duration
+    ? formatDuration(duration, { format: ['days', 'hours', 'minutes'] })
+    : null;
 
   return (
-    <div
+    <article
       className={cn(
-        'p-4 rounded-lg border-l-4 bg-card animate-slide-in',
-        incident.status === 'resolved' 
-          ? 'border-l-status-up' 
+        'group relative overflow-hidden rounded-xl border transition-all duration-300',
+        'bg-card hover:shadow-soft',
+        isResolved 
+          ? 'border-l-4 border-l-status-up opacity-75 hover:opacity-100' 
           : incident.severity === 'critical'
-            ? 'border-l-status-down'
-            : 'border-l-status-degraded'
+            ? 'border-l-4 border-l-status-down shadow-glow-sm'
+            : 'border-l-4 border-l-status-degraded'
       )}
+      style={{ animationDelay: `${index * 50}ms` }}
+      aria-label={`${isResolved ? 'Resolved' : 'Ongoing'} incident: ${incident.title}`}
     >
-      <div className="flex items-start gap-3">
-        <div
-          className={cn(
-            'p-1.5 rounded-full shrink-0',
-            incident.status === 'resolved' ? 'bg-status-up-bg' : config.bg
-          )}
-        >
-          <Icon
+      {/* Subtle background gradient for ongoing incidents */}
+      {!isResolved && (
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-50/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      )}
+
+      <div className="relative p-5">
+        <div className="flex items-start gap-4">
+          {/* Icon */}
+          <div
             className={cn(
-              'h-4 w-4',
-              incident.status === 'resolved' ? 'text-status-up' : config.color
+              'p-2 rounded-lg shrink-0 transition-transform duration-300 group-hover:scale-110',
+              isResolved ? 'bg-status-up-bg' : config.bg
             )}
-          />
-        </div>
-        
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="font-medium text-foreground">{incident.title}</h4>
-            <span
+          >
+            <Icon
               className={cn(
-                'px-2 py-0.5 rounded text-xs font-medium',
-                incident.status === 'resolved'
-                  ? 'bg-status-up-bg text-status-up'
-                  : 'bg-status-degraded-bg text-status-degraded'
+                'h-5 w-5 transition-colors duration-300',
+                isResolved ? 'text-status-up' : config.color
               )}
-            >
-              {incident.status === 'resolved' ? 'Resolved' : 'Ongoing'}
-            </span>
+              aria-hidden="true"
+            />
           </div>
           
-          <p className="text-sm text-muted-foreground mt-1">
-            {incident.description}
-          </p>
-          
-          <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-            <span className="font-medium">{incident.serviceName}</span>
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              <span>
-                Started {formatDistanceToNow(new Date(incident.startedAt), { addSuffix: true })}
-              </span>
+          <div className="flex-1 min-w-0 space-y-3">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="font-semibold text-foreground text-base">
+                  {incident.title}
+                </h4>
+                <span
+                  className={cn(
+                    'px-2.5 py-1 rounded-md text-xs font-medium transition-colors',
+                    isResolved
+                      ? 'bg-status-up-bg text-status-up'
+                      : 'bg-status-degraded-bg text-status-degraded animate-pulse-glow'
+                  )}
+                >
+                  {isResolved ? 'Resolved' : 'Ongoing'}
+                </span>
+              </div>
+
+              {/* Severity badge */}
+              {!isResolved && (
+                <span
+                  className={cn(
+                    'px-2.5 py-1 rounded-md text-xs font-medium',
+                    config.bg,
+                    config.color
+                  )}
+                >
+                  {config.label}
+                </span>
+              )}
             </div>
-            {incident.resolvedAt && (
-              <span>
-                Resolved {formatDistanceToNow(new Date(incident.resolvedAt), { addSuffix: true })}
-              </span>
-            )}
+            
+            {/* Description */}
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {incident.description}
+            </p>
+            
+            {/* Metadata */}
+            <div className="flex items-center gap-4 flex-wrap text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 font-medium text-foreground/80">
+                <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>{incident.serviceName}</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                <time dateTime={incident.startedAt}>
+                  Started {formatDistanceToNow(new Date(incident.startedAt), { addSuffix: true })}
+                </time>
+              </div>
+
+              {incident.resolvedAt && durationText && (
+                <div className="flex items-center gap-1.5 text-status-up">
+                  <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>
+                    Resolved in {durationText}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -103,40 +160,9 @@ export function IncidentHistory({ incidents }: IncidentHistoryProps) {
   const resolvedIncidents = incidents.filter(i => i.status === 'resolved');
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-6 animate-fade-in" aria-labelledby="incident-history-title">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">Incident History</h2>
-        {ongoingIncidents.length > 0 && (
-          <span className="px-2 py-1 rounded-full bg-status-degraded-bg text-status-degraded text-xs font-medium">
-            {ongoingIncidents.length} ongoing
-          </span>
-        )}
-      </div>
-
-      <div className="space-y-3">
-        {incidents.length === 0 ? (
-          <div className="p-8 rounded-xl border bg-card text-center">
-            <CheckCircle2 className="h-12 w-12 text-status-up mx-auto mb-3" />
-            <p className="text-muted-foreground">No incidents in the last 30 days</p>
-          </div>
-        ) : (
-          <>
-            {ongoingIncidents.map((incident, index) => (
-              <div key={incident.id} style={{ animationDelay: `${index * 100}ms` }}>
-                <IncidentItem incident={incident} />
-              </div>
-            ))}
-            {resolvedIncidents.map((incident, index) => (
-              <div
-                key={incident.id}
-                style={{ animationDelay: `${(ongoingIncidents.length + index) * 100}ms` }}
-              >
-                <IncidentItem incident={incident} />
-              </div>
-            ))}
-          </>
-        )}
-      </div>
-    </section>
-  );
-}
+        <h2 
+          id="incident-history-title"
+          className="text-2xl font-bold text-foreground tracking-tigh
