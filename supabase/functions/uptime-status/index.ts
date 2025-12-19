@@ -1,4 +1,15 @@
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+export const config = { runtime: "edge" };
+
+const MONITOR_ID = "802022031";
+const API_URL = "https://api.uptimerobot.com/v2/getMonitors";
+
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "content-type",
+  "Access-Control-Allow-Methods": "GET,OPTIONS",
+};
+
+type MonitorStatus = "up" | "degraded" | "down";
 
 interface UptimeRobotMonitor {
   id: number;
@@ -16,8 +27,6 @@ interface UptimeRobotResponse {
   error?: { message: string };
 }
 
-type MonitorStatus = "up" | "degraded" | "down";
-
 interface MonitorResult {
   id: string;
   name: string;
@@ -29,29 +38,6 @@ interface MonitorResult {
   allTimeUptime: number | null;
   lastCheck: string;
 }
-
-const MONITOR_ID = "802022031";
-const API_URL = "https://api.uptimerobot.com/v2/getMonitors";
-
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "content-type",
-  "Access-Control-Allow-Methods": "GET,OPTIONS",
-};
-
-const STATUS_MAP: Record<number, MonitorStatus> = {
-  2: "up",
-  8: "degraded",
-  9: "down",
-  0: "down",
-  1: "down",
-};
-
-const json = (data: unknown, status = 200) =>
-  new Response(JSON.stringify(data), {
-    status,
-    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-  });
 
 function parseRatios(ratio?: string): [number | null, number | null] {
   if (!ratio) return [null, null];
@@ -90,17 +76,30 @@ async function fetchMonitor(apiKey: string): Promise<UptimeRobotMonitor> {
   return data.monitors[0];
 }
 
-serve(async (req) => {
+export default async function handler(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
 
   try {
-    const apiKey = Deno.env.get("UPTIMEROBOT_API_KEY");
-    if (!apiKey) return json({ error: "API key missing" }, 500);
+    const apiKey = process.env.UPTIMEROBOT_API_KEY;
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: "API key missing" }), {
+        status: 500,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      });
+    }
 
     const monitor = await fetchMonitor(apiKey);
     const [uptime30d, uptime90d] = parseRatios(monitor.custom_uptime_ratio);
+
+    const STATUS_MAP: Record<number, MonitorStatus> = {
+      2: "up",
+      8: "degraded",
+      9: "down",
+      0: "down",
+      1: "down",
+    };
 
     const result: MonitorResult = {
       id: monitor.id.toString(),
@@ -114,11 +113,14 @@ serve(async (req) => {
       lastCheck: new Date().toISOString(),
     };
 
-    return json(result);
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
   } catch (e) {
-    return json(
-      { error: e instanceof Error ? e.message : "Unknown error" },
-      500,
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      { status: 500, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
     );
   }
-});
+}
