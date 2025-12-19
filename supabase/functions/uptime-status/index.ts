@@ -37,7 +37,8 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
-const MONITOR_ID = 'm802022031-0f970a766a44ddf4f9672bf0';
+// Monitor ID without 'm' prefix (UptimeRobot requires numeric ID)
+const MONITOR_ID = '802022031';
 
 const UPTIMEROBOT_API_URL = 'https://api.uptimerobot.com/v2/getMonitors';
 
