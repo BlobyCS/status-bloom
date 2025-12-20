@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface DayHistory {
+  date: string;
+  status: 'up' | 'degraded' | 'down';
+  uptime: number;
+}
+
 export interface UptimeStatus {
   id: string;
   name: string;
@@ -11,6 +17,7 @@ export interface UptimeStatus {
   uptime90d: number;
   lastCheck: string;
   allTimeUptime: number;
+  history: DayHistory[];
 }
 
 export function useUptimeStatus() {
