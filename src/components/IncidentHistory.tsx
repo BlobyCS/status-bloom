@@ -34,7 +34,6 @@ function IncidentItem({ incident, index }: IncidentItemProps) {
   const Icon = incident.status === 'resolved' ? CheckCircle2 : config.icon;
   const isResolved = incident.status === 'resolved';
 
-  // Calculate incident duration
   const duration = incident.resolvedAt
     ? intervalToDuration({
         start: new Date(incident.startedAt),
@@ -60,14 +59,12 @@ function IncidentItem({ incident, index }: IncidentItemProps) {
       style={{ animationDelay: `${index * 50}ms` }}
       aria-label={`${isResolved ? 'Resolved' : 'Ongoing'} incident: ${incident.title}`}
     >
-      {/* Subtle background gradient for ongoing incidents */}
       {!isResolved && (
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-50/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       )}
 
       <div className="relative p-5">
         <div className="flex items-start gap-4">
-          {/* Icon */}
           <div
             className={cn(
               'p-2 rounded-lg shrink-0 transition-transform duration-300 group-hover:scale-110',
@@ -84,7 +81,6 @@ function IncidentItem({ incident, index }: IncidentItemProps) {
           </div>
           
           <div className="flex-1 min-w-0 space-y-3">
-            {/* Header */}
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
                 <h4 className="font-semibold text-foreground text-base">
@@ -102,7 +98,6 @@ function IncidentItem({ incident, index }: IncidentItemProps) {
                 </span>
               </div>
 
-              {/* Severity badge */}
               {!isResolved && (
                 <span
                   className={cn(
@@ -116,12 +111,10 @@ function IncidentItem({ incident, index }: IncidentItemProps) {
               )}
             </div>
             
-            {/* Description */}
             <p className="text-sm text-muted-foreground leading-relaxed">
               {incident.description}
             </p>
             
-            {/* Metadata */}
             <div className="flex items-center gap-4 flex-wrap text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5 font-medium text-foreground/80">
                 <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" />
@@ -138,9 +131,7 @@ function IncidentItem({ incident, index }: IncidentItemProps) {
               {incident.resolvedAt && durationText && (
                 <div className="flex items-center gap-1.5 text-status-up">
                   <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span>
-                    Resolved in {durationText}
-                  </span>
+                  <span>Resolved in {durationText}</span>
                 </div>
               )}
             </div>
@@ -159,10 +150,40 @@ export function IncidentHistory({ incidents }: IncidentHistoryProps) {
   const ongoingIncidents = incidents.filter(i => i.status === 'ongoing');
   const resolvedIncidents = incidents.filter(i => i.status === 'resolved');
 
+  if (incidents.length === 0) {
+    return (
+      <section className="space-y-6 animate-fade-in" aria-labelledby="incident-history-title">
+        <h2 id="incident-history-title" className="text-2xl font-bold text-foreground tracking-tight">
+          Incident History
+        </h2>
+        <p className="text-muted-foreground">No incidents recorded.</p>
+      </section>
+    );
+  }
+
   return (
     <section className="space-y-6 animate-fade-in" aria-labelledby="incident-history-title">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 
-          id="incident-history-title"
-          className="text-2xl font-bold text-foreground tracking-tigh
+      <h2 id="incident-history-title" className="text-2xl font-bold text-foreground tracking-tight">
+        Incident History
+      </h2>
+      
+      {ongoingIncidents.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-foreground">Ongoing</h3>
+          {ongoingIncidents.map((incident, index) => (
+            <IncidentItem key={incident.id} incident={incident} index={index} />
+          ))}
+        </div>
+      )}
+
+      {resolvedIncidents.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-foreground">Resolved</h3>
+          {resolvedIncidents.map((incident, index) => (
+            <IncidentItem key={incident.id} incident={incident} index={index} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
