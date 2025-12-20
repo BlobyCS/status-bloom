@@ -8,8 +8,69 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Generate last 30 days dates
+function getLast30Days(): string[] {
+  const days: string[] = [];
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    days.push(date.toISOString().split('T')[0]);
+  }
+  return days;
+}
+
+// Parse logs to determine daily status
+function parseLogs(logs: any[], days: string[]): { date: string; status: 'up' | 'down' | 'degraded'; uptime: number }[] {
+  const dayStatus: Record<string, { downMinutes: number; degradedMinutes: number }> = {};
+  
+  // Initialize all days as fully operational
+  days.forEach(day => {
+    dayStatus[day] = { downMinutes: 0, degradedMinutes: 0 };
+  });
+
+  // Process logs - type 1 = down, type 2 = up
+  logs.forEach((log: any) => {
+    if (log.type === 1) { // Down event
+      const startDate = new Date(log.datetime * 1000);
+      const duration = log.duration || 0; // duration in seconds
+      const endDate = new Date(startDate.getTime() + duration * 1000);
+      
+      // Mark affected days
+      let current = new Date(startDate);
+      while (current <= endDate) {
+        const dayKey = current.toISOString().split('T')[0];
+        if (dayStatus[dayKey]) {
+          // Calculate minutes down for this day
+          const dayStart = new Date(dayKey);
+          const dayEnd = new Date(dayKey);
+          dayEnd.setDate(dayEnd.getDate() + 1);
+          
+          const effectiveStart = startDate > dayStart ? startDate : dayStart;
+          const effectiveEnd = endDate < dayEnd ? endDate : dayEnd;
+          
+          const minutesDown = Math.ceil((effectiveEnd.getTime() - effectiveStart.getTime()) / 60000);
+          dayStatus[dayKey].downMinutes += minutesDown;
+        }
+        current.setDate(current.getDate() + 1);
+      }
+    }
+  });
+
+  // Convert to array with status
+  return days.map(day => {
+    const { downMinutes } = dayStatus[day];
+    const totalMinutes = 24 * 60;
+    const uptime = Math.max(0, Math.min(100, ((totalMinutes - downMinutes) / totalMinutes) * 100));
+    
+    let status: 'up' | 'down' | 'degraded' = 'up';
+    if (downMinutes > 60) status = 'down';
+    else if (downMinutes > 0) status = 'degraded';
+    
+    return { date: day, status, uptime };
+  });
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -35,6 +96,8 @@ serve(async (req) => {
       response_times_limit: "1",
       all_time_uptime_ratio: "1",
       custom_uptime_ratios: "30-90",
+      logs: "1",
+      logs_limit: "50",
     });
 
     const res = await fetch(API_URL, {
@@ -44,7 +107,7 @@ serve(async (req) => {
     });
 
     const data = await res.json();
-    console.log("UptimeRobot response:", JSON.stringify(data));
+    console.log("UptimeRobot response stat:", data.stat);
 
     if (data.stat === "fail") {
       console.error("UptimeRobot error:", data.error);
@@ -65,6 +128,10 @@ serve(async (req) => {
 
     const [uptime30d, uptime90d] = monitor.custom_uptime_ratio?.split("-").map(Number) ?? [null, null];
     const status = monitor.status === 2 ? "up" : monitor.status === 8 ? "degraded" : "down";
+    
+    // Generate 30 day history
+    const last30Days = getLast30Days();
+    const history = parseLogs(monitor.logs || [], last30Days);
 
     return new Response(
       JSON.stringify({
@@ -77,6 +144,7 @@ serve(async (req) => {
         uptime90d,
         allTimeUptime: monitor.all_time_uptime_ratio ? Number(monitor.all_time_uptime_ratio) : null,
         lastCheck: new Date().toISOString(),
+        history,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
