@@ -1,11 +1,21 @@
+import { useCallback, useState } from 'react';
 import { useUptimeStatus } from '@/hooks/useUptimeStatus';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { UptimeChart } from '@/components/UptimeChart';
+import { RefreshCountdown } from '@/components/RefreshCountdown';
 import { RefreshCw, ExternalLink, Clock, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const REFRESH_INTERVAL_SECONDS = 60;
+
 const StatusPage = () => {
   const { data, loading, error, refetch } = useUptimeStatus();
+  const [countdownKey, setCountdownKey] = useState(0);
+
+  const handleManualRefresh = useCallback(() => {
+    refetch();
+    setCountdownKey((k) => k + 1); // Reset countdown
+  }, [refetch]);
 
   const getStatusColor = (status: 'up' | 'degraded' | 'down' | undefined) => {
     switch (status) {
@@ -53,9 +63,14 @@ const StatusPage = () => {
         <div className="container max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-semibold tracking-tight">bloby.eu Uptime</h1>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <RefreshCountdown 
+                key={countdownKey} 
+                intervalSeconds={REFRESH_INTERVAL_SECONDS} 
+                onRefresh={refetch} 
+              />
               <button
-                onClick={refetch}
+                onClick={handleManualRefresh}
                 disabled={loading}
                 className="p-2 rounded-full hover:bg-secondary transition-colors disabled:opacity-50"
                 title="Refresh"
