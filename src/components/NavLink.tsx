@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 /**
  * Extended NavLink props with additional styling options
  */
-interface NavLinkCompatProps extends Omit<NavLinkProps, "className"> {
+interface NavLinkCompatProps extends Omit<NavLinkProps, "className" | "children"> {
   /** Base className applied to the link */
   className?: string;
   /** Additional className applied when link is active */
@@ -18,6 +18,8 @@ interface NavLinkCompatProps extends Omit<NavLinkProps, "className"> {
   showActiveIndicator?: boolean;
   /** Custom active indicator element */
   activeIndicator?: React.ReactNode;
+  /** Children content */
+  children?: React.ReactNode;
 }
 
 /**

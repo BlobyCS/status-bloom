@@ -10,6 +10,7 @@ export interface Service {
   lastCheck: string;
   uptime30d: number;
   uptime90d: number;
+  allTimeUptime?: number;
 }
 
 export interface StatusCheck {
