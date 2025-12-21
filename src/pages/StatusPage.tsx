@@ -4,7 +4,8 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { UptimeChart } from '@/components/UptimeChart';
 import { RefreshCountdown } from '@/components/RefreshCountdown';
 import { IncidentHistory } from '@/components/IncidentHistory';
-import { RefreshCw, ExternalLink, Clock, Zap } from 'lucide-react';
+import { MaintenanceSchedule } from '@/components/MaintenanceSchedule';
+import { RefreshCw, ExternalLink, Clock, Zap, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const REFRESH_INTERVAL_SECONDS = 60;
@@ -15,7 +16,7 @@ const StatusPage = () => {
 
   const handleManualRefresh = useCallback(() => {
     refetch();
-    setCountdownKey((k) => k + 1); // Reset countdown
+    setCountdownKey((k) => k + 1);
   }, [refetch]);
 
   const getStatusColor = (status: 'up' | 'degraded' | 'down' | undefined) => {
@@ -34,7 +35,7 @@ const StatusPage = () => {
   const getStatusText = (status: 'up' | 'degraded' | 'down' | undefined) => {
     switch (status) {
       case 'up':
-        return 'Operational';
+        return 'All Systems Operational';
       case 'degraded':
         return 'Degraded Performance';
       case 'down':
@@ -44,39 +45,44 @@ const StatusPage = () => {
     }
   };
 
-  const getStatusBg = (status: 'up' | 'degraded' | 'down' | undefined) => {
+  const getStatusGlow = (status: 'up' | 'degraded' | 'down' | undefined) => {
     switch (status) {
       case 'up':
-        return 'bg-status-up-bg';
+        return 'status-glow-up';
       case 'degraded':
-        return 'bg-status-degraded-bg';
+        return 'status-glow-degraded';
       case 'down':
-        return 'bg-status-down-bg';
+        return 'status-glow-down';
       default:
-        return 'bg-secondary';
+        return '';
     }
   };
 
   return (
     <div className="min-h-screen bg-background gradient-mesh flex flex-col">
       {/* Header */}
-      <header className="border-b border-border/50 backdrop-blur-sm bg-background/80">
-        <div className="container max-w-3xl mx-auto px-4 py-4">
+      <header className="glass-surface sticky top-0 z-50">
+        <div className="container max-w-4xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold tracking-tight">bloby.eu Uptime</h1>
             <div className="flex items-center gap-3">
-              <RefreshCountdown 
-                key={countdownKey} 
-                intervalSeconds={REFRESH_INTERVAL_SECONDS} 
-                onRefresh={refetch} 
+              <div className="p-2 rounded-xl bg-primary/10">
+                <Activity className="h-5 w-5 text-primary" />
+              </div>
+              <h1 className="text-xl font-bold tracking-tight">bloby.eu</h1>
+            </div>
+            <div className="flex items-center gap-4">
+              <RefreshCountdown
+                key={countdownKey}
+                intervalSeconds={REFRESH_INTERVAL_SECONDS}
+                onRefresh={refetch}
               />
               <button
                 onClick={handleManualRefresh}
                 disabled={loading}
-                className="p-2 rounded-full hover:bg-secondary transition-colors disabled:opacity-50"
+                className="p-2.5 rounded-xl hover:bg-secondary/80 transition-all duration-200 disabled:opacity-50"
                 title="Refresh"
               >
-                <RefreshCw className={cn("h-4 w-4 text-muted-foreground", loading && "animate-spin")} />
+                <RefreshCw className={cn('h-4 w-4 text-muted-foreground', loading && 'animate-spin')} />
               </button>
               <ThemeToggle />
             </div>
@@ -85,17 +91,17 @@ const StatusPage = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container max-w-3xl mx-auto px-4 py-12">
+      <main className="flex-1 container max-w-4xl mx-auto px-6 py-12">
         {error ? (
-          <div className="text-center p-8 rounded-xl border bg-card">
-            <div className="w-16 h-16 rounded-full bg-status-down-bg mx-auto mb-4 flex items-center justify-center">
-              <div className="w-6 h-6 rounded-full bg-status-down" />
+          <div className="text-center p-12 rounded-3xl glass-card animate-fade-in">
+            <div className="w-20 h-20 rounded-2xl bg-status-down-bg mx-auto mb-6 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-status-down" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground mb-2">Unable to fetch status</h2>
-            <p className="text-muted-foreground mb-4">{error}</p>
+            <h2 className="text-2xl font-bold text-foreground mb-3">Unable to fetch status</h2>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">{error}</p>
             <button
               onClick={refetch}
-              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+              className="px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all duration-200 font-medium hover-lift"
             >
               Try Again
             </button>
@@ -105,29 +111,38 @@ const StatusPage = () => {
             {/* Status Card */}
             <div
               className={cn(
-                'p-8 rounded-2xl border transition-all',
-                getStatusBg(data?.status)
+                'relative p-8 sm:p-10 rounded-3xl glass-card transition-all duration-500 overflow-hidden',
+                !loading && getStatusGlow(data?.status)
               )}
             >
-              <div className="flex items-center gap-6">
+              {/* Background gradient based on status */}
+              <div
+                className={cn(
+                  'absolute inset-0 opacity-30 transition-opacity duration-500',
+                  data?.status === 'up' && 'bg-gradient-to-br from-status-up/20 to-transparent',
+                  data?.status === 'degraded' && 'bg-gradient-to-br from-status-degraded/20 to-transparent',
+                  data?.status === 'down' && 'bg-gradient-to-br from-status-down/20 to-transparent'
+                )}
+              />
+
+              <div className="relative flex items-center gap-8">
                 {/* Status Icon */}
                 <div className="relative">
                   <div
                     className={cn(
-                      'w-20 h-20 rounded-full flex items-center justify-center',
-                      loading ? 'bg-muted' : getStatusBg(data?.status)
+                      'w-24 h-24 rounded-2xl flex items-center justify-center transition-all duration-300',
+                      loading ? 'bg-muted' : data?.status === 'up' ? 'bg-status-up-bg' : data?.status === 'degraded' ? 'bg-status-degraded-bg' : 'bg-status-down-bg'
                     )}
                   >
                     <div
                       className={cn(
-                        'w-10 h-10 rounded-full transition-all',
-                        loading ? 'bg-muted-foreground/30 animate-pulse' : getStatusColor(data?.status),
-                        data?.status === 'up' && 'shadow-lg shadow-status-up/50'
+                        'w-12 h-12 rounded-xl transition-all duration-300',
+                        loading ? 'bg-muted-foreground/30 animate-pulse' : getStatusColor(data?.status)
                       )}
                     />
                   </div>
                   {data?.status === 'up' && !loading && (
-                    <div className="absolute inset-0 w-20 h-20 rounded-full bg-status-up/20 animate-ping" />
+                    <div className="absolute inset-0 w-24 h-24 rounded-2xl bg-status-up/20 animate-ping" />
                   )}
                 </div>
 
@@ -135,7 +150,7 @@ const StatusPage = () => {
                 <div className="flex-1">
                   <h2
                     className={cn(
-                      'text-2xl sm:text-3xl font-bold',
+                      'text-3xl sm:text-4xl font-bold tracking-tight',
                       data?.status === 'up' && 'text-status-up',
                       data?.status === 'degraded' && 'text-status-degraded',
                       data?.status === 'down' && 'text-status-down',
@@ -144,7 +159,7 @@ const StatusPage = () => {
                   >
                     {loading ? 'Checking status...' : getStatusText(data?.status)}
                   </h2>
-                  <p className="text-muted-foreground mt-1">
+                  <p className="text-muted-foreground mt-2 text-lg">
                     {data?.name || 'bloby.eu'}
                   </p>
                 </div>
@@ -154,52 +169,57 @@ const StatusPage = () => {
             {/* Stats Grid */}
             {data && !loading && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="p-4 rounded-xl border bg-card text-center">
-                  <div className="text-2xl font-bold font-mono text-foreground">
+                <div className="p-5 rounded-2xl glass-card text-center hover-lift">
+                  <div className="text-3xl font-bold font-mono text-foreground">
                     {data.uptime30d.toFixed(2)}%
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">30-day uptime</div>
+                  <div className="text-xs text-muted-foreground mt-2 font-medium uppercase tracking-wider">30-day uptime</div>
                 </div>
-                <div className="p-4 rounded-xl border bg-card text-center">
-                  <div className="text-2xl font-bold font-mono text-foreground">
+                <div className="p-5 rounded-2xl glass-card text-center hover-lift">
+                  <div className="text-3xl font-bold font-mono text-foreground">
                     {data.uptime90d.toFixed(2)}%
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">90-day uptime</div>
+                  <div className="text-xs text-muted-foreground mt-2 font-medium uppercase tracking-wider">90-day uptime</div>
                 </div>
-                <div className="p-4 rounded-xl border bg-card text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    <Zap className="h-4 w-4 text-primary" />
-                    <span className="text-2xl font-bold font-mono text-foreground">
+                <div className="p-5 rounded-2xl glass-card text-center hover-lift">
+                  <div className="flex items-center justify-center gap-2">
+                    <Zap className="h-5 w-5 text-primary" />
+                    <span className="text-3xl font-bold font-mono text-foreground">
                       {data.latency ?? '—'}
                     </span>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">Latency (ms)</div>
+                  <div className="text-xs text-muted-foreground mt-2 font-medium uppercase tracking-wider">Latency (ms)</div>
                 </div>
-                <div className="p-4 rounded-xl border bg-card text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-lg font-medium text-foreground">
+                <div className="p-5 rounded-2xl glass-card text-center hover-lift">
+                  <div className="flex items-center justify-center gap-2">
+                    <Clock className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-xl font-semibold text-foreground">
                       {new Date(data.lastCheck).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
                     </span>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">Last check</div>
+                  <div className="text-xs text-muted-foreground mt-2 font-medium uppercase tracking-wider">Last check</div>
                 </div>
               </div>
             )}
 
             {/* Uptime Chart */}
             {data?.history && data.history.length > 0 && !loading && (
-              <div className="p-6 rounded-xl border bg-card">
+              <div className="p-6 rounded-2xl glass-card">
                 <UptimeChart history={data.history} />
               </div>
             )}
 
+            {/* Maintenance Schedule */}
+            <div className="p-6 rounded-2xl glass-card">
+              <MaintenanceSchedule />
+            </div>
+
             {/* Incident History */}
             {data?.incidents && !loading && (
-              <div className="p-6 rounded-xl border bg-card">
+              <div className="p-6 rounded-2xl glass-card">
                 <IncidentHistory incidents={data.incidents} />
               </div>
             )}
@@ -210,9 +230,9 @@ const StatusPage = () => {
                 href={data.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 p-4 rounded-xl border bg-card hover:bg-secondary/50 transition-colors group"
+                className="flex items-center justify-center gap-3 p-5 rounded-2xl glass-card hover:bg-secondary/50 transition-all duration-300 group hover-lift"
               >
-                <span className="text-muted-foreground group-hover:text-foreground transition-colors">
+                <span className="text-muted-foreground group-hover:text-foreground transition-colors font-medium">
                   Visit {new URL(data.url).hostname}
                 </span>
                 <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -223,9 +243,11 @@ const StatusPage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 py-6">
-        <div className="container max-w-3xl mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>Powered by Bloby Status Monitor</p>
+      <footer className="border-t border-border/30 py-8">
+        <div className="container max-w-4xl mx-auto px-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            Powered by <span className="font-medium text-foreground">Bloby Status Monitor</span>
+          </p>
         </div>
       </footer>
     </div>
