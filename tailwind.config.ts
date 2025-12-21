@@ -19,9 +19,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter var', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
-        display: ['Cal Sans', 'Inter', 'sans-serif'],
+        display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -74,6 +74,8 @@ export default {
           "degraded-bg": "hsl(var(--status-degraded-bg))",
           down: "hsl(var(--status-down))",
           "down-bg": "hsl(var(--status-down-bg))",
+          maintenance: "hsl(var(--status-maintenance))",
+          "maintenance-bg": "hsl(var(--status-maintenance-bg))",
         },
         chart: {
           "1": "hsl(var(--chart-1))",
