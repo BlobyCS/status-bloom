@@ -3,6 +3,7 @@ import { useUptimeStatus } from '@/hooks/useUptimeStatus';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { UptimeChart } from '@/components/UptimeChart';
 import { RefreshCountdown } from '@/components/RefreshCountdown';
+import { IncidentHistory } from '@/components/IncidentHistory';
 import { RefreshCw, ExternalLink, Clock, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -193,6 +194,13 @@ const StatusPage = () => {
             {data?.history && data.history.length > 0 && !loading && (
               <div className="p-6 rounded-xl border bg-card">
                 <UptimeChart history={data.history} />
+              </div>
+            )}
+
+            {/* Incident History */}
+            {data?.incidents && !loading && (
+              <div className="p-6 rounded-xl border bg-card">
+                <IncidentHistory incidents={data.incidents} />
               </div>
             )}
 
