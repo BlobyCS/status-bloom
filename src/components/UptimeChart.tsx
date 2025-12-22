@@ -14,85 +14,61 @@ interface UptimeChartProps {
 export function UptimeChart({ history }: UptimeChartProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'up':
-        return 'bg-status-up hover:bg-status-up/80';
+        return 'bg-status-up';
       case 'degraded':
-        return 'bg-status-degraded hover:bg-status-degraded/80';
+        return 'bg-status-degraded';
       case 'down':
-        return 'bg-status-down hover:bg-status-down/80';
+        return 'bg-status-down';
       default:
         return 'bg-muted';
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'up':
-        return 'Operational';
-      case 'degraded':
-        return 'Degraded';
-      case 'down':
-        return 'Down';
-      default:
-        return 'Unknown';
-    }
-  };
+  const averageUptime = history.length > 0
+    ? history.reduce((sum, d) => sum + d.uptime, 0) / history.length
+    : 0;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-foreground">30 Day History</h3>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-status-up" />
-            <span>Up</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-status-degraded" />
-            <span>Degraded</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-status-down" />
-            <span>Down</span>
-          </div>
-        </div>
+        <h3 className="text-sm font-medium text-foreground">30 Day History</h3>
+        <span className="text-xs text-muted-foreground font-mono">
+          {averageUptime.toFixed(2)}% avg
+        </span>
       </div>
 
       <TooltipProvider delayDuration={0}>
-        <div className="flex gap-1">
+        <div className="flex gap-[3px]">
           {history.map((day, index) => (
             <Tooltip key={day.date}>
               <TooltipTrigger asChild>
-                <div
+                <button
                   className={cn(
-                    'flex-1 h-10 rounded-sm cursor-pointer transition-all duration-200',
-                    getStatusColor(day.status),
-                    'hover:scale-y-110 hover:z-10'
+                    'flex-1 h-8 rounded-sm transition-all duration-150 hover:scale-y-125 hover:opacity-80 focus-ring',
+                    getStatusColor(day.status)
                   )}
-                  style={{ animationDelay: `${index * 20}ms` }}
+                  style={{ animationDelay: `${index * 15}ms` }}
                 />
               </TooltipTrigger>
               <TooltipContent 
                 side="top" 
-                className="bg-popover border border-border shadow-lg"
+                className="text-xs"
               >
-                <div className="text-sm space-y-1">
-                  <p className="font-semibold">{formatDate(day.date)}</p>
+                <div className="space-y-0.5">
+                  <p className="font-medium">{formatDate(day.date)}</p>
                   <p className={cn(
-                    'font-medium',
+                    'font-mono',
                     day.status === 'up' && 'text-status-up',
                     day.status === 'degraded' && 'text-status-degraded',
                     day.status === 'down' && 'text-status-down'
                   )}>
-                    {getStatusLabel(day.status)}
-                  </p>
-                  <p className="text-muted-foreground">
-                    {day.uptime.toFixed(2)}% uptime
+                    {day.uptime.toFixed(2)}%
                   </p>
                 </div>
               </TooltipContent>
@@ -101,8 +77,22 @@ export function UptimeChart({ history }: UptimeChartProps) {
         </div>
       </TooltipProvider>
 
-      <div className="flex justify-between text-xs text-muted-foreground">
+      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
         <span>30 days ago</span>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-sm bg-status-up" />
+            Up
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-sm bg-status-degraded" />
+            Degraded
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-sm bg-status-down" />
+            Down
+          </span>
+        </div>
         <span>Today</span>
       </div>
     </div>
