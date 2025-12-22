@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
 
 interface RefreshCountdownProps {
   intervalSeconds: number;
@@ -29,14 +30,19 @@ export const RefreshCountdown = ({ intervalSeconds, onRefresh }: RefreshCountdow
   const progress = ((intervalSeconds - secondsLeft) / intervalSeconds) * 100;
 
   return (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-      <div className="w-12 h-1 bg-secondary rounded-full overflow-hidden">
+    <div className="flex items-center gap-2.5">
+      <div className="relative w-16 h-1.5 bg-secondary rounded-full overflow-hidden">
         <div
-          className="h-full bg-foreground/20 transition-all duration-1000 ease-linear"
+          className={cn(
+            'absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-linear',
+            'bg-gradient-to-r from-primary to-accent'
+          )}
           style={{ width: `${progress}%` }}
         />
       </div>
-      <span className="font-mono text-[10px] tabular-nums w-4 text-right">{secondsLeft}</span>
+      <span className="font-mono text-[11px] text-muted-foreground tabular-nums w-5 text-right">
+        {secondsLeft}s
+      </span>
     </div>
   );
 };
