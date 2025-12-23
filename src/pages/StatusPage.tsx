@@ -5,6 +5,7 @@ import { UptimeChart } from '@/components/UptimeChart';
 import { RefreshCountdown } from '@/components/RefreshCountdown';
 import { IncidentHistory } from '@/components/IncidentHistory';
 import { MaintenanceSchedule } from '@/components/MaintenanceSchedule';
+import { AdminHeader } from '@/components/AdminHeader';
 import { RefreshCw, ExternalLink, Clock, Zap, Activity, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -76,6 +77,7 @@ const StatusPage = () => {
               <span className="font-semibold text-foreground tracking-tight">bloby.eu</span>
             </div>
             <div className="flex items-center gap-2">
+              <AdminHeader />
               <RefreshCountdown
                 key={countdownKey}
                 intervalSeconds={REFRESH_INTERVAL_SECONDS}
