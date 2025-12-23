@@ -1,1 +1,10 @@
 project_id = "stbfdctxzhrrgsfbzaoz"
+
+[functions.uptime-status]
+verify_jwt = false
+
+[functions.setup-admin]
+verify_jwt = false
+
+[functions.check-vpn]
+verify_jwt = false

@@ -1,11 +1,12 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Shield, LogOut, LogIn } from 'lucide-react';
+import { LogOut, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { AdminSetup } from './AdminSetup';
 
 export function AdminHeader() {
-  const { user, isAdmin, signOut, loading } = useAuth();
+  const { user, signOut, loading } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -23,12 +24,7 @@ export function AdminHeader() {
     <div className="flex items-center gap-2">
       {user ? (
         <div className="flex items-center gap-2">
-          {isAdmin && (
-            <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium">
-              <Shield className="h-3 w-3" />
-              Admin
-            </span>
-          )}
+          <AdminSetup />
           <Button
             variant="ghost"
             size="sm"
@@ -36,7 +32,7 @@ export function AdminHeader() {
             className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
           >
             <LogOut className="h-3.5 w-3.5" />
-            Sign Out
+            Odhlásit
           </Button>
         </div>
       ) : (
@@ -47,7 +43,7 @@ export function AdminHeader() {
           className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
         >
           <LogIn className="h-3.5 w-3.5" />
-          Admin Login
+          Admin přihlášení
         </Button>
       )}
     </div>
