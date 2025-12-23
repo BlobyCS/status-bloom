@@ -10,6 +10,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 interface MaintenanceWindow {
   id: string;
@@ -35,6 +36,7 @@ const fetchMaintenanceWindows = async (): Promise<MaintenanceWindow[]> => {
 };
 
 export function MaintenanceSchedule() {
+  const { isAdmin } = useAuth();
   const [isAdding, setIsAdding] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -147,19 +149,21 @@ export function MaintenanceSchedule() {
           <Wrench className="h-4 w-4 text-muted-foreground" />
           Scheduled Maintenance
         </h2>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsAdding(!isAdding)}
-          className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
-        >
-          {isAdding ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-          {isAdding ? 'Cancel' : 'Schedule'}
-        </Button>
+        {isAdmin && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsAdding(!isAdding)}
+            className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+          >
+            {isAdding ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+            {isAdding ? 'Cancel' : 'Schedule'}
+          </Button>
+        )}
       </div>
 
-      {/* Add Form */}
-      {isAdding && (
+      {/* Add Form - Only for admins */}
+      {isAdmin && isAdding && (
         <div className="p-4 rounded-lg border border-border bg-secondary/30 space-y-3 slide-up">
           <Input
             placeholder="Maintenance title"
@@ -321,14 +325,16 @@ export function MaintenanceSchedule() {
                     )}
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deleteMutation.mutate(window.id)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => deleteMutation.mutate(window.id)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
               </article>
             );
           })}
