@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useVpnCheck } from "@/hooks/useVpnCheck";
 import { VpnBlocked } from "@/components/VpnBlocked";
+import { CookieConsent } from "@/components/CookieConsent";
 import StatusPage from "./pages/StatusPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
@@ -28,14 +29,17 @@ function AppContent() {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<StatusPage />} />
-        <Route path="/status" element={<StatusPage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+    <>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<StatusPage />} />
+          <Route path="/status" element={<StatusPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+      <CookieConsent />
+    </>
   );
 }
 
