@@ -239,7 +239,7 @@ const StatusPage = () => {
               className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
             >
               <Cookie className="h-3 w-3" />
-              Cookies
+              Cookie Monitor
             </Link>
           </div>
         </div>
