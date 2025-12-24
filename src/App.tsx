@@ -8,6 +8,7 @@ import { VpnBlocked } from "@/components/VpnBlocked";
 import { CookieConsent } from "@/components/CookieConsent";
 import StatusPage from "./pages/StatusPage";
 import AuthPage from "./pages/AuthPage";
+import CookiePreferences from "./pages/CookiePreferences";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -35,6 +36,7 @@ function AppContent() {
           <Route path="/" element={<StatusPage />} />
           <Route path="/status" element={<StatusPage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/cookies" element={<CookiePreferences />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

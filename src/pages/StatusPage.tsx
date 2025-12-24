@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useUptimeStatus } from '@/hooks/useUptimeStatus';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { UptimeChart } from '@/components/UptimeChart';
@@ -6,7 +7,7 @@ import { RefreshCountdown } from '@/components/RefreshCountdown';
 import { IncidentHistory } from '@/components/IncidentHistory';
 import { MaintenanceSchedule } from '@/components/MaintenanceSchedule';
 import { AdminHeader } from '@/components/AdminHeader';
-import { RefreshCw, ExternalLink, Clock, Zap, Activity, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { RefreshCw, ExternalLink, Clock, Zap, Activity, CheckCircle2, AlertTriangle, XCircle, Cookie } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const REFRESH_INTERVAL_SECONDS = 60;
@@ -228,9 +229,19 @@ const StatusPage = () => {
       {/* Footer */}
       <footer className="border-t border-border/40 py-6 mt-auto">
         <div className="container max-w-3xl mx-auto px-4 sm:px-6">
-          <p className="text-xs text-muted-foreground text-center">
-            Powered by Bloby Status Monitor
-          </p>
+          <div className="flex items-center justify-center gap-4">
+            <p className="text-xs text-muted-foreground">
+              Powered by Bloby Status Monitor
+            </p>
+            <span className="text-muted-foreground/40">•</span>
+            <Link 
+              to="/cookies" 
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              <Cookie className="h-3 w-3" />
+              Cookies
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
