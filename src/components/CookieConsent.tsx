@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Cookie, Settings, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useCookieConsent, CookieConsent as CookieConsentType } from '@/hooks/useCookieConsent';
 
 export function CookieConsent() {
@@ -25,7 +26,10 @@ export function CookieConsent() {
               <div>
                 <h3 className="font-semibold text-foreground">Používáme cookies</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Používáme cookies pro zlepšení vašeho zážitku, analýzu návštěvnosti a personalizaci obsahu.
+                  Používáme cookies pro zlepšení vašeho zážitku.{' '}
+                  <Link to="/cookies" className="underline hover:text-foreground">
+                    Spravovat nastavení
+                  </Link>
                 </p>
               </div>
             </div>
